@@ -84,5 +84,9 @@ def dataframe_to_tsv(df):
                      download_name='query_results.tsv')
 
 
+@app.route('/health-check', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
