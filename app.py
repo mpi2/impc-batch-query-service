@@ -7,19 +7,33 @@ app = Flask(__name__)
 # Load the dataset (assuming it's already stored in the same directory)
 dataset = pl.read_parquet('batch_query_service_data_parquet/*.parquet')
 
-def flatten_all_nested_columns(inputDf):
-    resultDf = inputDf
-    for colName in resultDf.columns:
-        if str(resultDf.select(pl.col(colName)).dtypes[0]) not in ["String", "Int64", "Boolean"]:
-            if str(resultDf.select(pl.col(colName)).dtypes[0]).startswith("Struct"):
-                resultDf = resultDf.with_columns(pl.col(colName).struct.json_encode())
-            elif str(resultDf.select(pl.col(colName)).dtypes[0]).startswith("List"):
-                resultDf = resultDf.with_columns(("[" + pl.col(colName).cast(pl.List(pl.Utf8)).list.join(", ")+ "]").alias(f"stringifiedList_{colName}"))
+def printPhenotype(phenotype):
+    return f'id: {phenotype["id"]}, name: {phenotype["name"]}'
+def printPhenotypeList(phenotypeList):
+    return phenotypeList.map_elements(printPhenotype, return_dtype=pl.Utf8)
 
-    for colName in resultDf.columns:
-        if colName.startswith("stringifiedList_"):
-            resultDf = resultDf.drop( colName.replace("stringifiedList_", "") )
-            resultDf = resultDf.rename({colName: colName.replace("stringifiedList_", "")})
+
+def flatten_nested_columns(inputDf):
+    resultDf = inputDf
+    resultDf = resultDf.with_columns(pl.col("displayPhenotype").map_elements(printPhenotype, return_dtype=pl.Utf8))
+    resultDf = resultDf.with_columns(pl.col("significantPhenotype").map_elements(printPhenotype, return_dtype=pl.Utf8))
+    resultDf = resultDf.with_columns(pl.col("phenotypeSexes").cast(pl.List(pl.Utf8)).list.join(", ").alias("stringifiedList_phenotypeSexes"))
+
+    resultDf = resultDf.with_columns((pl.col("intermediatePhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(", ")).alias("stringifiedList_intermediatePhenotypes"))
+    resultDf = resultDf.with_columns((pl.col("potentialPhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(", ")).alias("stringifiedList_potentialPhenotypes"))
+    resultDf = resultDf.with_columns((pl.col("topLevelPhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(", ")).alias("stringifiedList_topLevelPhenotypes"))
+
+    resultDf = resultDf.drop("phenotypeSexes")
+    resultDf = resultDf.drop("intermediatePhenotypes")
+    resultDf = resultDf.drop("potentialPhenotypes")
+    resultDf = resultDf.drop("topLevelPhenotypes")
+
+    resultDf = resultDf.rename({
+        "stringifiedList_phenotypeSexes": "phenotypeSexes",
+        "stringifiedList_intermediatePhenotypes": "intermediatePhenotypes",
+        "stringifiedList_potentialPhenotypes": "potentialPhenotypes",
+        "stringifiedList_topLevelPhenotypes": "topLevelPhenotypes"
+    })
     
     return resultDf
 
