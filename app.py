@@ -67,7 +67,8 @@ def query_data():
 
 def dataframe_to_xlsx(df):
     output = io.BytesIO()
-    df.write_excel(output)
+    newDf = flatten_nested_columns(df)
+    newDf.write_excel(output)
     output.seek(0)
     return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=True, download_name='query_results.xlsx')
@@ -75,7 +76,7 @@ def dataframe_to_xlsx(df):
 
 def dataframe_to_tsv(df):
     output = io.BytesIO()
-    newDf = flatten_all_nested_columns(df)
+    newDf = flatten_nested_columns(df)
     newDf.write_csv(output, separator='\t')
 
     output.seek(0)
