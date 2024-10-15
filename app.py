@@ -19,9 +19,9 @@ def flatten_nested_columns(inputDf):
     resultDf = resultDf.with_columns(pl.col("significantPhenotype").map_elements(printPhenotype, return_dtype=pl.Utf8))
     resultDf = resultDf.with_columns(pl.col("phenotypeSexes").cast(pl.List(pl.Utf8)).list.join(", ").alias("stringifiedList_phenotypeSexes"))
 
-    resultDf = resultDf.with_columns((pl.col("intermediatePhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(", ")).alias("stringifiedList_intermediatePhenotypes"))
-    resultDf = resultDf.with_columns((pl.col("potentialPhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(", ")).alias("stringifiedList_potentialPhenotypes"))
-    resultDf = resultDf.with_columns((pl.col("topLevelPhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(", ")).alias("stringifiedList_topLevelPhenotypes"))
+    resultDf = resultDf.with_columns((pl.col("intermediatePhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(" | ")).alias("stringifiedList_intermediatePhenotypes"))
+    resultDf = resultDf.with_columns((pl.col("potentialPhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(" | ")).alias("stringifiedList_potentialPhenotypes"))
+    resultDf = resultDf.with_columns((pl.col("topLevelPhenotypes").map_elements(printPhenotypeList, return_dtype=pl.List(pl.Utf8)).list.join(" | ")).alias("stringifiedList_topLevelPhenotypes"))
 
     resultDf = resultDf.drop("phenotypeSexes")
     resultDf = resultDf.drop("intermediatePhenotypes")
