@@ -1,11 +1,13 @@
+import os
+
 from flask import Flask, request, jsonify, send_file
 import polars as pl
 import io
 
 app = Flask(__name__)
 
-# Load the dataset (assuming it's already stored in the same directory)
-dataset = pl.read_parquet("batch_query_service_data_parquet/*.parquet")
+DATA_PATH = os.environ.get("BATCH_QUERY_DATA_PATH", ".")
+dataset = pl.read_parquet(f'{DATA_PATH}/*.parquet')
 
 
 def print_phenotype(phenotype):
@@ -75,7 +77,7 @@ def flatten_nested_columns(input_df):
 @app.route("/mi/impc/batch-query", methods=["POST"])
 def query_data():
     # Parse request headers and data
-    response_format = request.headers.get("Response-Format", "json").lower()
+    response_format = request.headers.get('Accept', 'application/json').lower()
     mgi_ids = []
 
     if "file" in request.files:
@@ -89,7 +91,7 @@ def query_data():
     # Query the dataset
     filtered_data = dataset.filter(pl.col("mgiGeneAccessionId").is_in(mgi_ids))
 
-    if response_format == "json":
+    if response_format == 'application/json':
         return jsonify(filtered_data.to_dicts())
     elif response_format == "xlsx":
         return dataframe_to_xlsx(filtered_data)
