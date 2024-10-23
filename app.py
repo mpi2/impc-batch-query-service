@@ -11,7 +11,7 @@ dataset = pl.read_parquet("batch_query_service_data_parquet/*.parquet")
 def print_phenotype(phenotype):
     return f'id: {phenotype["id"]}, name: {phenotype["name"]}'
 
-
+ 
 def print_phenotype_list(phenotype_list):
     return phenotype_list.map_elements(print_phenotype, return_dtype=pl.Utf8)
 
@@ -116,7 +116,6 @@ def dataframe_to_tsv(df):
     output = io.BytesIO()
     new_df = flatten_nested_columns(df)
     new_df.write_csv(output, separator="\t")
-
     output.seek(0)
     return send_file(
         output,
