@@ -7,7 +7,7 @@ import io
 app = Flask(__name__)
 
 DATA_PATH = os.environ.get("BATCH_QUERY_DATA_PATH", ".")
-dataset = pl.read_parquet(f'{DATA_PATH}/*.parquet')
+dataset = pl.read_parquet(f"{DATA_PATH}/*.parquet")
 
 
 def print_phenotype(phenotype):
@@ -77,7 +77,7 @@ def flatten_nested_columns(input_df):
 @app.route("/mi/impc/batch-query", methods=["POST"])
 def query_data():
     # Parse request headers and data
-    response_format = request.headers.get('Accept', 'application/json').lower()
+    response_format = request.headers.get("Accept", "application/json").lower()
     mgi_ids = []
 
     if "file" in request.files:
@@ -91,7 +91,7 @@ def query_data():
     # Query the dataset
     filtered_data = dataset.filter(pl.col("mgiGeneAccessionId").is_in(mgi_ids))
 
-    if response_format == 'application/json':
+    if response_format == "application/json":
         return jsonify(filtered_data.to_dicts())
     elif response_format == "xlsx":
         return dataframe_to_xlsx(filtered_data)
@@ -118,7 +118,6 @@ def dataframe_to_tsv(df):
     output = io.BytesIO()
     new_df = flatten_nested_columns(df)
     new_df.write_csv(output, separator="\t")
-
     output.seek(0)
     return send_file(
         output,
