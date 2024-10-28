@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask, request, jsonify, send_file
+from flask_cors import cross_origin
 import polars as pl
 import io
 
@@ -75,6 +76,7 @@ def flatten_nested_columns(input_df):
 
 
 @app.route("/mi/impc/batch-query", methods=["POST"])
+@cross_origin()
 def query_data():
     # Parse request headers and data
     response_format = request.headers.get("Accept", "application/json").lower()

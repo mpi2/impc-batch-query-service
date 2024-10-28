@@ -1,3 +1,4 @@
 flask~=3.0.3
+Flask_Cors==5.0.0
 polars
 XlsxWriter==3.2.0
