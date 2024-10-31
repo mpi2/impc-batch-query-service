@@ -20,52 +20,61 @@ def print_phenotype_list(phenotype_list):
 
 
 def flatten_nested_columns(input_df):
-    result_df = input_df
-    result_df = result_df.with_columns(
-        pl.col("displayPhenotype").map_elements(print_phenotype, return_dtype=pl.Utf8)
-    )
-    result_df = result_df.with_columns(
-        pl.col("significantPhenotype").map_elements(
-            print_phenotype, return_dtype=pl.Utf8
+    result_df = input_df.with_columns(
+        displayPhenotype=pl.when(
+            pl.col("displayPhenotype").is_not_null()
         )
-    )
-    result_df = result_df.with_columns(
-        pl.col("phenotypeSexes")
-        .cast(pl.List(pl.Utf8))
-        .list.join(", ")
-        .alias("stringifiedList_phenotypeSexes")
-    )
-
-    result_df = result_df.with_columns(
-        (
+        .then(
+            pl.col("displayPhenotype").map_elements(
+                print_phenotype, return_dtype=pl.Utf8
+            )
+        ),
+        significantPhenotype=pl.when(
+            pl.col("significantPhenotype").is_not_null()
+        )
+        .then(
+            pl.col("significantPhenotype").map_elements(
+                print_phenotype, return_dtype=pl.Utf8
+            )
+        ),
+        phenotypeSexes=pl.when(
+            pl.col("phenotypeSexes").is_not_null()
+        )
+        .then(
+            pl.col("phenotypeSexes")
+            .cast(pl.List(pl.Utf8))
+            .list.join(", ")
+        ),
+        stringifiedList_intermediatePhenotypes=pl.when(
+            pl.col("intermediatePhenotypes").is_not_null()
+        ).then(
             pl.col("intermediatePhenotypes")
             .map_elements(print_phenotype_list, return_dtype=pl.List(pl.Utf8))
             .list.join(" | ")
-        ).alias("stringifiedList_intermediatePhenotypes")
-    )
-    result_df = result_df.with_columns(
-        (
+        ),
+        stringifiedList_potentialPhenotypes=pl.when(
+            pl.col("potentialPhenotypes").is_not_null()
+        ).then(
             pl.col("potentialPhenotypes")
             .map_elements(print_phenotype_list, return_dtype=pl.List(pl.Utf8))
             .list.join(" | ")
-        ).alias("stringifiedList_potentialPhenotypes")
-    )
-    result_df = result_df.with_columns(
-        (
+        ),
+        stringifiedList_topLevelPhenotypes=pl.when(
+            pl.col("topLevelPhenotypes").is_not_null()
+        )
+        .then(
             pl.col("topLevelPhenotypes")
             .map_elements(print_phenotype_list, return_dtype=pl.List(pl.Utf8))
             .list.join(" | ")
-        ).alias("stringifiedList_topLevelPhenotypes")
+        )
     )
 
-    result_df = result_df.drop("phenotypeSexes")
     result_df = result_df.drop("intermediatePhenotypes")
     result_df = result_df.drop("potentialPhenotypes")
     result_df = result_df.drop("topLevelPhenotypes")
 
     result_df = result_df.rename(
         {
-            "stringifiedList_phenotypeSexes": "phenotypeSexes",
             "stringifiedList_intermediatePhenotypes": "intermediatePhenotypes",
             "stringifiedList_potentialPhenotypes": "potentialPhenotypes",
             "stringifiedList_topLevelPhenotypes": "topLevelPhenotypes",
