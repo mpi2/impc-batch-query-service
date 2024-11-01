@@ -72,6 +72,7 @@ def flatten_nested_columns(input_df):
     result_df = result_df.drop("intermediatePhenotypes")
     result_df = result_df.drop("potentialPhenotypes")
     result_df = result_df.drop("topLevelPhenotypes")
+    result_df = result_df.drop("humanPhenotypes")
 
     result_df = result_df.rename(
         {
