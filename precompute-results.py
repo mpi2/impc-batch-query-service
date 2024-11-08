@@ -54,7 +54,6 @@ def ensemble_gene_result(df):
     humanGeneIds = get_value_from_df(df, "hgncGeneAccessionId")
     geneId = get_value_from_df(df, "id")
     alleles = get_value_from_df(df, "alleleSymbol", unwrap_value=False)
-    print(alleles)
     alellesData = list(map(functools.partial(
         ensemble_allele_result, df=df), alleles))
 
@@ -122,15 +121,15 @@ def process_gene(full_dataset, mgi_id):
     return ensemble_gene_result(df)
 
 
-# def process_list_of_genes(full_dataset, sub_list_ids, job_id):
-#     process_results = {}
-#     ids_size = len(sub_list_ids)
-#     for index, mgi_id in enumerate(sub_list_ids):
-#         print(f"processing GENE {mgi_id}, {index} of {ids_size}")
-#         gene_results = process_gene(full_dataset, mgi_id)
-#         process_results[mgi_id] = gene_results
-#     with open(f"preprocessed-results-{job_id}.json", "w") as outfile:
-#         json.dump(process_results, outfile)
+def process_list_of_genes(full_dataset, sub_list_ids, job_id):
+    process_results = {}
+    ids_size = len(sub_list_ids)
+    for index, mgi_id in enumerate(sub_list_ids):
+        print(f"processing GENE {mgi_id}, {index} of {ids_size}")
+        gene_results = process_gene(full_dataset, mgi_id)
+        process_results[mgi_id] = gene_results
+    with open(f"preprocessed-results-{job_id}.json", "w") as outfile:
+        json.dump(process_results, outfile)
 
 
 def create_dataset():
@@ -141,25 +140,28 @@ def main():
     full_dataset = create_dataset()
     mgi_ids = full_dataset["mgiGeneAccessionId"].unique().to_list()
     mgi_ids = list(filter(None, mgi_ids))
-    mgi_ids = mgi_ids[0:5]
     ids_count = len(mgi_ids)
     print(f"total of {ids_count} genes")
-    full_results = {}
-    for index, mgi_id in enumerate(mgi_ids):
-        print(f"processing GENE {mgi_id}, {index} of {ids_count}")
-        full_results[mgi_id] = process_gene(full_dataset, mgi_id)
 
-    with open("full-dataset-results.json", "w") as outfile:
-        json.dump(full_results, outfile)
-    # for i in range(0, list_of_cores):
-    #     proc = multiprocessing.get_context("spawn").Process(
-    #         target=process_list_of_genes, args=(
-    #             full_dataset, ids_sublists[i], i)
-    #     )
-    #     proc.start()
-    #     proc.join()
+    # mgi_ids = mgi_ids[0:5]
+    # for index, mgi_id in enumerate(mgi_ids):
+    #     print(f"processing GENE {mgi_id}, {index} of {ids_count}")
+    #     full_results[mgi_id] = process_gene(full_dataset, mgi_id)
 
-    #     print(f"Executed sub process {i}")
+    # with open("full-dataset-results.json", "w") as outfile:
+    #     json.dump(full_results, outfile)
+
+    list_of_cores = 5
+    ids_sublists = [list(c) for c in divide(list_of_cores, mgi_ids)]
+    for i in range(0, list_of_cores):
+        proc = multiprocessing.get_context("spawn").Process(
+            target=process_list_of_genes, args=(
+                full_dataset, ids_sublists[i], i)
+        )
+        proc.start()
+        proc.join()
+
+        print(f"Executed sub process {i}")
 
 
 if __name__ == "__main__":
