@@ -140,6 +140,7 @@ def query_preprocessed_data():
     else:
         return jsonify({"error": "No MGI accession IDs provided"}), 400
 
+    mgi_ids = list(dict.fromkeys(mgi_ids))
     # Query the dataset
     filtered_data = list(
         map(lambda geneId: full_results_data[geneId], mgi_ids)
