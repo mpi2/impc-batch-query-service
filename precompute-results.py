@@ -60,19 +60,40 @@ def ensemble_allele_result(allele, df):
     return alleleData
 
 
+def get_all_significant_phenotypes(df):
+    filteredDf = df.filter(pl.col("significant") == True)
+    list_with_data = filteredDf["significantPhenotypeName"].unique().to_list()
+    return list(filter(None, list_with_data))
+
+
+def get_all_significant_systems(df):
+    filteredDf = df.filter(pl.col("significant") == True)
+    filteredDf = filteredDf.with_columns(
+        systemNames=pl.concat_list("topLevelPhenotypeNames")
+    )
+    return list(dict.fromkeys(sum(filter(None, filteredDf["systemNames"].to_list()), [])))
+
+
 def ensemble_gene_result(df):
-    humanGeneSymbols = get_value_from_df(df, "humanGeneSymbol")
-    humanGeneIds = get_value_from_df(df, "hgncGeneAccessionId")
-    geneId = get_value_from_df(df, "id")
+    human_gene_symbols = get_value_from_df(df, "humanGeneSymbol")
+    human_gene_ids = get_value_from_df(df, "hgncGeneAccessionId")
+    gene_id = get_value_from_df(df, "id")
     alleles = get_value_from_df(df, "alleleSymbol", unwrap_value=False)
-    alellesData = list(map(functools.partial(
+    mouse_gene_symbol = df["alleleSymbol"].to_list()[0].split("<")[0]
+    all_significant_systems = get_all_significant_systems(df)
+    all_significant_phenotypes = get_all_significant_phenotypes(df)
+
+    alelles_data = list(map(functools.partial(
         ensemble_allele_result, df=df), alleles))
 
     geneData = {
-        "humanGeneSymbols": humanGeneSymbols,
-        "humanGeneIds": humanGeneIds,
-        "geneId": geneId,
-        "alleles": alellesData,
+        "mouseGeneSymbol": mouse_gene_symbol,
+        "allSignificantSystems": all_significant_systems,
+        "allSignificantPhenotypes": all_significant_phenotypes,
+        "humanGeneSymbols": human_gene_symbols,
+        "humanGeneIds": human_gene_ids,
+        "geneId": gene_id,
+        "alleles": alelles_data,
     }
     return geneData
 
@@ -145,10 +166,12 @@ def main():
     full_results = {}
 
     for index, mgi_id in enumerate(mgi_ids):
-        print(f"processing GENE {mgi_id}, {index} of {ids_count}")
+        print(
+            f"\rprocessing GENE {mgi_id}, {index} of {ids_count}", end="", flush=True)
         full_results[mgi_id] = process_gene(full_dataset, mgi_id)
 
     with open("full-dataset-results.json", "w") as outfile:
+        print("\nDONE")
         json.dump(full_results, outfile)
 
 
