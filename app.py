@@ -4,11 +4,24 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import cross_origin
 import polars as pl
 import io
+import json
 
 app = Flask(__name__)
 
+
+def load_pre_processed_file(filename):
+    try:
+        return json.load(open(filename, "r"))
+    except IOError:
+        print(f"Cannot load file {filename}")
+        return {}
+
+
 DATA_PATH = os.environ.get("BATCH_QUERY_DATA_PATH", ".")
 dataset = pl.read_parquet(f"{DATA_PATH}/*.parquet")
+FULL_RESULTS_DATA_PATH = os.environ.get(
+    "FULL_RESULTS_DATA_PATH", "full-dataset-results.json")
+full_results_data = load_pre_processed_file(FULL_RESULTS_DATA_PATH)
 
 
 def print_phenotype(phenotype):
@@ -111,6 +124,28 @@ def query_data():
         return dataframe_to_tsv(filtered_data)
     else:
         return jsonify({"error": "Unsupported response format"}), 400
+
+
+@app.route("/mi/impc/batch-query-preprocessed", methods=["POST"])
+@cross_origin()
+def query_preprocessed_data():
+    # Parse request headers and data
+    mgi_ids = []
+
+    if "file" in request.files:
+        file = request.files["file"]
+        mgi_ids = file.read().decode("utf-8").strip().split("\n")
+    elif request.json and "mgi_ids" in request.json:
+        mgi_ids = request.json["mgi_ids"]
+    else:
+        return jsonify({"error": "No MGI accession IDs provided"}), 400
+
+    # Query the dataset
+    filtered_data = list(
+        map(lambda geneId: full_results_data[geneId], mgi_ids)
+    )
+
+    return jsonify(filtered_data)
 
 
 def dataframe_to_xlsx(df):
