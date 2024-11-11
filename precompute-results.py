@@ -13,10 +13,20 @@ def get_value_from_df(df, dfKey, unwrap_value=True):
     return val
 
 
-def get_filtered_list(df, alleleSymbol, dfColumn):
-    filteredDf = df.filter(pl.col("alleleSymbol") == alleleSymbol)
+def get_filtered_list(df, alleleSymbol, dfColumn, significant_data=True):
+    filteredDf = df.filter((pl.col("alleleSymbol") == alleleSymbol) & (
+        pl.col("significant") == significant_data))
     list_with_data = filteredDf[dfColumn].unique().to_list()
     return list(filter(None, list_with_data))
+
+
+def get_filtered_significant_systems(df, alleleSymbol, significant_data=True):
+    filteredDf = df.filter((pl.col("alleleSymbol") ==
+                           alleleSymbol) & (pl.col("significant") == significant_data))
+    filteredDf = filteredDf.with_columns(
+        systemNames=pl.concat_list("topLevelPhenotypeNames")
+    )
+    return list(dict.fromkeys(sum(filter(None, filteredDf["systemNames"].to_list()), [])))
 
 
 def get_phenotype_names(phenotype_list):
@@ -24,24 +34,27 @@ def get_phenotype_names(phenotype_list):
 
 
 def ensemble_allele_result(allele, df):
-    df = df.with_columns(
-        mergedTopLevelPhenotypeNames=pl.concat_list("topLevelPhenotypeNames")
-    )
     significantLifeStages = get_filtered_list(df, allele, "lifeStageName")
     significantPhenotypes = get_filtered_list(
         df, allele, "significantPhenotypeName")
-    significantSystems = list(dict.fromkeys(sum(
-        filter(None, df["mergedTopLevelPhenotypeNames"].to_list()), [])))
+    notSignificantPhenotypes = get_filtered_list(
+        df, allele, "significantPhenotypeName", False)
+    significantSystems = get_filtered_significant_systems(df, allele)
+    notSignificantSystems = get_filtered_significant_systems(df, allele, False)
 
     significantLifeStages.sort()
     significantPhenotypes.sort()
     significantSystems.sort()
+    notSignificantPhenotypes.sort()
+    notSignificantSystems.sort()
 
     alleleData = {
         "allele": allele,
         "significantLifeStages": significantLifeStages,
         "significantPhenotypes": significantPhenotypes,
-        "significantSystems": significantSystems
+        "notSignificantPhenotypes": notSignificantPhenotypes,
+        "significantSystems": significantSystems,
+        "notSignificantSystems": notSignificantSystems
     }
 
     return alleleData
@@ -69,7 +82,7 @@ def process_gene(full_dataset, mgi_id):
     df = gene_data.drop(["statisticalResultId", "statisticalResultId", "alleleName",
                         "dataType", "effectSize", "femaleMutantCount", "maleMutantCount", "metadataGroup", "pValue", "parameterName",
                          "parameterStableId", "phenotypeSexes", "phenotypingCentre", "pipelineStableId", "procedureMinAnimals",
-                         "procedureMinFemales", "procedureMinMales", "procedureName", "procedureStableId", "projectName", "significant",
+                         "procedureMinFemales", "procedureMinMales", "procedureName", "procedureStableId", "projectName",
                          "statisticalMethod", "status", "zygosity", "intermediatePhenotypes", "potentialPhenotypes", "humanPhenotypes",
                          "alleleAccessionId"
                          ])
