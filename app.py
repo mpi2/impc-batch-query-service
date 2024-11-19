@@ -7,12 +7,16 @@ import io
 
 app = Flask(__name__)
 
-DATA_PATH = os.environ.get("BATCH_QUERY_DATA_PATH", ".")
+DATA_PATH = os.environ.get("BATCH_QUERY_DATA_PATH", "./batch_query_data_parquet")
 dataset = pl.read_parquet(f"{DATA_PATH}/*.parquet")
 
 
 def print_phenotype(phenotype):
-    return f'id: {phenotype["id"]}, name: {phenotype["name"]}'
+    return (
+        f'id: {phenotype["id"]}, name: {phenotype["name"]}'
+        if phenotype is not None
+        else ""
+    )
 
 
 def print_phenotype_list(phenotype_list):
