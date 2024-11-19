@@ -44,4 +44,8 @@ deploy_prod:
   script:
     - ssh -o StrictHostKeyChecking=no "$DEPLOY_USER"@"$DEPLOY_SERVER" rm -rf "$DEPLOY_DIR/src/*"
     - scp -o StrictHostKeyChecking=no -r $(pwd)/* "$DEPLOY_USER"@"$DEPLOY_SERVER":"$DEPLOY_DIR/src/"
-    - ssh -o StrictHostKeyChecking=no "$DEPLOY_USER"@"$DEPLOY_SERVER" '$DEPLOY_DIR/restart_gunicorn.sh'
+    - ssh -o StrictHostKeyChecking=no "$DEPLOY_USER"@"$DEPLOY_SERVER" "
+      set -e
+      cd $DEPLOY_DIR
+      ./restart_gunicorn.sh
+      "
