@@ -21,29 +21,18 @@ def print_phenotype_list(phenotype_list):
 
 def flatten_nested_columns(input_df):
     result_df = input_df.with_columns(
-        displayPhenotype=pl.when(
-            pl.col("displayPhenotype").is_not_null()
-        )
-        .then(
+        displayPhenotype=pl.when(pl.col("displayPhenotype").is_not_null()).then(
             pl.col("displayPhenotype").map_elements(
                 print_phenotype, return_dtype=pl.Utf8
             )
         ),
-        significantPhenotype=pl.when(
-            pl.col("significantPhenotype").is_not_null()
-        )
-        .then(
+        significantPhenotype=pl.when(pl.col("significantPhenotype").is_not_null()).then(
             pl.col("significantPhenotype").map_elements(
                 print_phenotype, return_dtype=pl.Utf8
             )
         ),
-        phenotypeSexes=pl.when(
-            pl.col("phenotypeSexes").is_not_null()
-        )
-        .then(
-            pl.col("phenotypeSexes")
-            .cast(pl.List(pl.Utf8))
-            .list.join(", ")
+        phenotypeSexes=pl.when(pl.col("phenotypeSexes").is_not_null()).then(
+            pl.col("phenotypeSexes").cast(pl.List(pl.Utf8)).list.join(", ")
         ),
         stringifiedList_intermediatePhenotypes=pl.when(
             pl.col("intermediatePhenotypes").is_not_null()
@@ -61,12 +50,18 @@ def flatten_nested_columns(input_df):
         ),
         stringifiedList_topLevelPhenotypes=pl.when(
             pl.col("topLevelPhenotypes").is_not_null()
-        )
-        .then(
+        ).then(
             pl.col("topLevelPhenotypes")
             .map_elements(print_phenotype_list, return_dtype=pl.List(pl.Utf8))
             .list.join(" | ")
-        )
+        ),
+        stringifiedList_humanPhenotypes=pl.when(
+            pl.col("humanPhenotypes").is_not_null()
+        ).then(
+            pl.col("humanPhenotypes")
+            .map_elements(print_phenotype_list, return_dtype=pl.List(pl.Utf8))
+            .list.join(" | ")
+        ),
     )
 
     result_df = result_df.drop("intermediatePhenotypes")
@@ -79,6 +74,7 @@ def flatten_nested_columns(input_df):
             "stringifiedList_intermediatePhenotypes": "intermediatePhenotypes",
             "stringifiedList_potentialPhenotypes": "potentialPhenotypes",
             "stringifiedList_topLevelPhenotypes": "topLevelPhenotypes",
+            "stringifiedList_humanPhenotypes": "humanPhenotypes",
         }
     )
 
@@ -145,4 +141,4 @@ def health_check():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
