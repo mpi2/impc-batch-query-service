@@ -1,6 +1,16 @@
-image: ubuntu:latest
+image: $CI_REGISTRY/mouse-informatics/ubuntu:latest
+
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+  MOUNT_POINT: /builds/$CI_PROJECT_PATH/mnt
+  CI_REGISTRY: dockerhub.ebi.ac.uk
+  CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH
+  DOCKER_TLS_CERTDIR: ""
+
 stages:
   - deploy
+
 deploy_prod:
   stage: deploy
   before_script:
