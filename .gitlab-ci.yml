@@ -42,4 +42,5 @@ deploy_prod:
     - chmod 700 ~/.ssh
 
   script:
+    - scp -o StrictHostKeyChecking=no -r $(pwd) "$DEPLOY_USER"@"$DEPLOY_SERVER":"$DEPLOY_DIR"
     - ssh -o StrictHostKeyChecking=no "$DEPLOY_USER"@"$DEPLOY_SERVER" 'touch text.txt'
