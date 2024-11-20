@@ -140,13 +140,21 @@ def query_preprocessed_data():
     else:
         return jsonify({"error": "No MGI accession IDs provided"}), 400
 
-    mgi_ids = list(dict.fromkeys(mgi_ids))
     # Query the dataset
-    filtered_data = list(
-        map(lambda geneId: full_results_data[geneId], mgi_ids)
-    )
+    filtered_data = []
+    not_found_ids = []
+    for mgi_id in mgi_ids:
+        if mgi_id in full_results_data:
+            filtered_data.append(full_results_data[mgi_id])
+        else:
+            not_found_ids.append(mgi_id)
 
-    return jsonify(filtered_data)
+    results = {
+        "results": filtered_data,
+        "notFoundIds": not_found_ids
+    }
+
+    return jsonify(results)
 
 
 def dataframe_to_xlsx(df):
