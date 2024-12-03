@@ -100,19 +100,23 @@ def flatten_nested_columns(input_df):
     return result_df
 
 
+def get_mgi_ids(request):
+    if "file" in request.files:
+        file = request.files["file"]
+        return file.read().decode("utf-8").strip().split("\n")
+    elif request.json and "mgi_ids" in request.json:
+        return request.json["mgi_ids"]
+    else:
+        return []
+
+
 @app.route("/mi/impc/batch-query", methods=["POST"])
 @cross_origin()
 def query_data():
     # Parse request headers and data
     response_format = request.headers.get("Accept", "application/json").lower()
-    mgi_ids = []
-
-    if "file" in request.files:
-        file = request.files["file"]
-        mgi_ids = file.read().decode("utf-8").strip().split("\n")
-    elif request.json and "mgi_ids" in request.json:
-        mgi_ids = request.json["mgi_ids"]
-    else:
+    mgi_ids = get_mgi_ids(request)
+    if not mgi_ids:
         return jsonify({"error": "No MGI accession IDs provided"}), 400
 
     # Query the dataset
@@ -132,14 +136,8 @@ def query_data():
 @cross_origin()
 def query_preprocessed_data():
     # Parse request headers and data
-    mgi_ids = []
-
-    if "file" in request.files:
-        file = request.files["file"]
-        mgi_ids = file.read().decode("utf-8").strip().split("\n")
-    elif request.json and "mgi_ids" in request.json:
-        mgi_ids = request.json["mgi_ids"]
-    else:
+    mgi_ids = get_mgi_ids(request)
+    if not mgi_ids:
         return jsonify({"error": "No MGI accession IDs provided"}), 400
 
     # Query the dataset
