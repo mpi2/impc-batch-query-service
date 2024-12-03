@@ -17,11 +17,13 @@ def load_pre_processed_file(filename):
         return {}
 
 
-DATA_PATH = os.environ.get("BATCH_QUERY_DATA_PATH", "./batch_query_data_parquet")
+DATA_PATH = os.environ.get("BATCH_QUERY_DATA_PATH",
+                           "./batch_query_data_parquet")
 dataset = pl.read_parquet(f"{DATA_PATH}/*.parquet")
-FULL_RESULTS_DATA_PATH = os.environ.get(
-    "FULL_RESULTS_DATA_PATH", "full-dataset-results.json")
-full_results_data = load_pre_processed_file(FULL_RESULTS_DATA_PATH)
+PREPROCESSED_RESULTS_DATA_PATH = os.environ.get(
+    "FULL_RESULTS_DATA_PATH", "preprocessed-results.json")
+preprocessed_results_data = load_pre_processed_file(
+    PREPROCESSED_RESULTS_DATA_PATH)
 
 
 def print_phenotype(phenotype):
@@ -144,8 +146,8 @@ def query_preprocessed_data():
     filtered_data = []
     not_found_ids = []
     for mgi_id in mgi_ids:
-        if mgi_id in full_results_data:
-            filtered_data.append(full_results_data[mgi_id])
+        if mgi_id in preprocessed_results_data:
+            filtered_data.append(preprocessed_results_data[mgi_id])
         else:
             not_found_ids.append(mgi_id)
 

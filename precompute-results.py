@@ -170,7 +170,7 @@ def main():
             f"\rprocessing GENE {mgi_id}, {index} of {ids_count}", end="", flush=True)
         full_results[mgi_id] = process_gene(full_dataset, mgi_id)
 
-    with open("full-dataset-results.json", "w") as outfile:
+    with open("preprocessed-results.json", "w") as outfile:
         print("\nDONE")
         json.dump(full_results, outfile)
 
