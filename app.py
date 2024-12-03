@@ -5,6 +5,7 @@ from flask_cors import cross_origin
 import polars as pl
 import io
 import json
+import ijson
 
 app = Flask(__name__)
 
@@ -155,6 +156,23 @@ def query_preprocessed_data():
     }
 
     return jsonify(results)
+
+
+@app.route("/mi/impc/batch-query-stream-results", methods=["POST"])
+@cross_origin()
+def query_stream_data():
+    mgi_ids = mgi_ids = get_mgi_ids(request)
+    if not mgi_ids:
+        return jsonify({"error": "No MGI accession IDs provided"}), 400
+
+    full_dataset_file = open("full-dataset.json", "rb")
+
+    def generate():
+        for record in ijson.items(full_dataset_file, "item"):
+            mgi_accession_id = record["mgiGeneAccessionId"]
+            if mgi_accession_id in mgi_ids:
+                yield f"{json.dumps(record)}\n"
+    return app.response_class(generate(), mimetype='application/x-ndjson')
 
 
 def dataframe_to_xlsx(df):
