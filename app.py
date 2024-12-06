@@ -2,6 +2,10 @@ import os
 
 from flask import Flask, request, jsonify, send_file
 from flask_cors import cross_origin
+from stream_zip import ZIP_32, stream_zip
+from datetime import datetime
+from stat import S_IFREG
+from to_file_like_obj import to_file_like_obj
 import polars as pl
 import io
 import json
@@ -167,12 +171,36 @@ def query_stream_data():
 
     full_dataset_file = open("full-dataset.json", "rb")
 
-    def generate():
-        for record in ijson.items(full_dataset_file, "item"):
-            mgi_accession_id = record["mgiGeneAccessionId"]
-            if mgi_accession_id in mgi_ids:
-                yield f"{json.dumps(record)}\n"
-    return app.response_class(generate(), mimetype='application/x-ndjson')
+    def generate_json_contents():
+        modified_at = datetime.now()
+        mode = S_IFREG | 0o600
+
+        def create_file_content():
+            index = 0
+            yield bytearray('[', "utf8")
+            for record in ijson.items(full_dataset_file, "item"):
+                mgi_accession_id = record["mgiGeneAccessionId"]
+                if mgi_accession_id in mgi_ids:
+                    strigifiedData = json.dumps(record)
+                    yield bytearray(strigifiedData, "utf8") if index == 0 else bytearray(f"{strigifiedData},", "utf8")
+                index += 1
+            yield bytearray(']', "utf8")
+
+        yield (
+            'batch-query-results.json',
+            modified_at,
+            mode,
+            ZIP_32,
+            create_file_content()
+        )
+
+    zipped_results = stream_zip(generate_json_contents())
+    return send_file(
+        to_file_like_obj(zipped_results),
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name="batch-query-results.zip",
+    )
 
 
 def dataframe_to_xlsx(df):
