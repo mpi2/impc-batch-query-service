@@ -182,8 +182,8 @@ def query_stream_data():
                 mgi_accession_id = record["mgiGeneAccessionId"]
                 if mgi_accession_id in mgi_ids:
                     strigifiedData = json.dumps(record)
-                    yield bytearray(strigifiedData, "utf8") if index == 0 else bytearray(f"{strigifiedData},", "utf8")
-                index += 1
+                    yield bytearray(strigifiedData, "utf8") if index == 0 else bytearray(f",{strigifiedData}", "utf8")
+                    index += 1
             yield bytearray(']', "utf8")
 
         yield (
