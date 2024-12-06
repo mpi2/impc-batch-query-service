@@ -165,7 +165,7 @@ def query_preprocessed_data():
 @app.route("/mi/impc/batch-query-stream-results", methods=["POST"])
 @cross_origin()
 def query_stream_data():
-    mgi_ids = mgi_ids = get_mgi_ids(request)
+    mgi_ids = get_mgi_ids(request)
     if not mgi_ids:
         return jsonify({"error": "No MGI accession IDs provided"}), 400
 
